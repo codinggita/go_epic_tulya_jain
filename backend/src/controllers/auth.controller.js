@@ -121,6 +121,30 @@ const refreshToken = asyncHandler(async (req, res) => {
   return sendSuccess(res, "Token refreshed successfully.", tokens, 200);
 });
 
+const getAllUsers = asyncHandler(async (req, res) => {
+  const result = await authService.getAllUsers(req.query);
+  return sendSuccess(res, "Users fetched successfully.", result, 200);
+});
+
+const createUserAdmin = asyncHandler(async (req, res) => {
+  const user = await authService.createUserAdmin(req.body);
+  const userObj = user.toObject();
+  delete userObj.password;
+  return sendSuccess(res, "User created successfully.", userObj, 201);
+});
+
+const updateUserAdmin = asyncHandler(async (req, res) => {
+  const user = await authService.updateUserAdmin(req.params.id, req.body);
+  const userObj = user.toObject();
+  delete userObj.password;
+  return sendSuccess(res, "User updated successfully.", userObj, 200);
+});
+
+const deleteUserAdmin = asyncHandler(async (req, res) => {
+  await authService.deleteUserAdmin(req.params.id);
+  return sendSuccess(res, "User deleted successfully.", null, 200);
+});
+
 module.exports = {
   register,
   login,
@@ -132,4 +156,9 @@ module.exports = {
   sendOtp,
   verifyOtp,
   refreshToken,
+  getAllUsers,
+  createUserAdmin,
+  updateUserAdmin,
+  deleteUserAdmin,
 };
+

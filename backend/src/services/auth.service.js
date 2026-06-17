@@ -177,6 +177,78 @@ const resetPassword = async (email, otp, newPassword) => {
   return true;
 };
 
+/**
+ * Get All Users (Admin only, paginated)
+ */
+const getAllUsers = async (queryParams) => {
+  const filter = {};
+  if (queryParams.role) {
+    filter.role = queryParams.role;
+  }
+  if (queryParams.search) {
+    filter.$or = [
+      { username: new RegExp(queryParams.search, "i") },
+      { email: new RegExp(queryParams.search, "i") },
+    ];
+  }
+  const options = {
+    page: queryParams.page,
+    limit: queryParams.limit,
+    sort: queryParams.sort || { createdAt: -1 },
+  };
+  const paginate = require("../utils/pagination.util");
+  return await paginate(User, filter, options);
+};
+
+/**
+ * Create User by Admin
+ */
+const createUserAdmin = async (data) => {
+  const { username, email, password, role } = data;
+  const userExists = await User.findOne({ email });
+  if (userExists) {
+    throw new Error("Email already registered");
+  }
+  return await User.create({
+    username,
+    email,
+    password,
+    role: role || "user",
+  });
+};
+
+/**
+ * Update User by Admin
+ */
+const updateUserAdmin = async (id, data) => {
+  const user = await User.findById(id);
+  if (!user) {
+    throw new Error("User not found");
+  }
+  if (data.username) user.username = data.username;
+  if (data.email) {
+    const emailExists = await User.findOne({ email: data.email, _id: { $ne: id } });
+    if (emailExists) throw new Error("Email already in use");
+    user.email = data.email;
+  }
+  if (data.password) user.password = data.password;
+  if (data.role) user.role = data.role;
+  await user.save();
+  return user;
+};
+
+/**
+ * Delete User by Admin
+ */
+const deleteUserAdmin = async (id) => {
+  const user = await User.findById(id);
+  if (!user) {
+    throw new Error("User not found");
+  }
+  await User.findByIdAndDelete(id);
+  return true;
+};
+
 module.exports = {
   register,
   login,
@@ -187,4 +259,9 @@ module.exports = {
   forgotPassword,
   resetPassword,
   generateTokens,
+  getAllUsers,
+  createUserAdmin,
+  updateUserAdmin,
+  deleteUserAdmin,
 };
+
